@@ -1,0 +1,80 @@
+{% extends "layouts/base.html" %}
+{% block title %}Dashboard — Admissions Review{% endblock %}
+
+{% block help_content %}
+<h4>Dashboard</h4>
+<p>The dashboard gives you an at-a-glance overview of your admissions pipeline. It shows the total number of applications and their status breakdown.</p>
+<ul>
+    <li><strong>Pending</strong> — applications awaiting review.</li>
+    <li><strong>Reviewed</strong> — applications with at least one review (manual or AI).</li>
+    <li><strong>Admitted / Waitlisted / Denied</strong> — final decisions.</li>
+</ul>
+<p>Click any applicant row in the "Recent Applications" table to view their full profile and reviews.</p>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <a href="{{ url_for('main.new_applicant') }}" class="btn btn-primary">+ New Applicant</a>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.get('total', 0) }}</div>
+        <div class="stat-label">Total Applications</div>
+    </div>
+    <div class="stat-card stat-pending">
+        <div class="stat-value">{{ stats.get('pending', 0) }}</div>
+        <div class="stat-label">Pending Review</div>
+    </div>
+    <div class="stat-card stat-reviewed">
+        <div class="stat-value">{{ stats.get('reviewed', 0) }}</div>
+        <div class="stat-label">Reviewed</div>
+    </div>
+    <div class="stat-card stat-admitted">
+        <div class="stat-value">{{ stats.get('admitted', 0) }}</div>
+        <div class="stat-label">Admitted</div>
+    </div>
+    <div class="stat-card stat-waitlisted">
+        <div class="stat-value">{{ stats.get('waitlisted', 0) }}</div>
+        <div class="stat-label">Waitlisted</div>
+    </div>
+    <div class="stat-card stat-denied">
+        <div class="stat-value">{{ stats.get('denied', 0) }}</div>
+        <div class="stat-label">Denied</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Recent Applications</h2>
+        <a href="{{ url_for('main.applicants') }}" class="btn btn-secondary">View All</a>
+    </div>
+    {% if recent %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Major</th>
+                <th>GPA</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in recent %}
+            <tr onclick="window.location='{{ url_for('main.view_applicant', applicant_id=app.id) }}'" style="cursor:pointer">
+                <td>{{ app.first_name }} {{ app.last_name }}</td>
+                <td>{{ app.email }}</td>
+                <td>{{ app.intended_major or '—' }}</td>
+                <td>{{ '%.2f'|format(app.gpa) if app.gpa else '—' }}</td>
+                <td><span class="badge badge-{{ app.status }}">{{ app.status }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No applications yet. <a href="{{ url_for('main.new_applicant') }}">Add your first applicant</a>.</p>
+    {% endif %}
+</div>
+{% endblock %}

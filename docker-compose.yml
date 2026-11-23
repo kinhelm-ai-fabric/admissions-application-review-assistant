@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-}
+      - SESSION_COOKIE_PATH=${SESSION_COOKIE_PATH:-/}
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-false}
+      - DATA_DIR=/app/data
+      - WEB_CONCURRENCY=${WEB_CONCURRENCY:-2}
+      - KINDO_API_KEY=${KINDO_API_KEY:-}
+      - KINDO_REVIEW_AGENT_ID=${KINDO_REVIEW_AGENT_ID:-}
+      - KINDO_API_URL=${KINDO_API_URL:-https://api.kindo.ai/v1/chat/completions}
+    volumes:
+      - app-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  app-data:

@@ -1,0 +1,170 @@
+{% extends "layouts/base.html" %}
+{% block title %}{{ applicant.first_name }} {{ applicant.last_name }} — Admissions Review{% endblock %}
+
+{% block help_content %}
+<h4>Applicant Profile</h4>
+<p>This page shows the full profile for an applicant and all associated reviews.</p>
+<ul>
+    <li><strong>AI Review</strong> — click "Request AI Review" to have the Kindo AI agent evaluate this applicant automatically. The agent scores academics, essay quality, and extracurriculars on a 1–10 scale.</li>
+    <li><strong>Manual Review</strong> — use the review form to submit your own scores and recommendation.</li>
+    <li><strong>Status</strong> — update the applicant's decision status (admitted, waitlisted, denied) using the status dropdown.</li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <a href="{{ url_for('main.applicants') }}" class="back-link">&larr; All Applicants</a>
+        <h1>{{ applicant.first_name }} {{ applicant.last_name }}</h1>
+    </div>
+    <div class="page-actions">
+        <form method="post" action="{{ url_for('main.ai_review', applicant_id=applicant.id) }}" style="display:inline">
+            <button type="submit" class="btn btn-accent" title="Request AI-powered review">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4v1a4 4 0 01-8 0V6a4 4 0 014-4z"/><path d="M6 10v1a6 6 0 0012 0v-1"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+                Request AI Review
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Applicant details -->
+<div class="detail-grid">
+    <div class="card">
+        <h3>Profile Information</h3>
+        <dl class="detail-list">
+            <dt>Email</dt><dd>{{ applicant.email }}</dd>
+            <dt>Intended Major</dt><dd>{{ applicant.intended_major or '—' }}</dd>
+            <dt>GPA</dt><dd>{{ '%.2f'|format(applicant.gpa) if applicant.gpa else '—' }}</dd>
+            <dt>Test Score</dt><dd>{{ applicant.test_score if applicant.test_score else '—' }}</dd>
+            <dt>Submitted</dt><dd>{{ applicant.created_at[:10] if applicant.created_at else '—' }}</dd>
+        </dl>
+
+        <!-- Status update -->
+        <form method="post" action="{{ url_for('main.update_status', applicant_id=applicant.id) }}" class="status-form">
+            <label for="status">Status</label>
+            <div class="status-row">
+                <select name="status" id="status">
+                    {% for s in ['pending', 'reviewed', 'admitted', 'waitlisted', 'denied'] %}
+                    <option value="{{ s }}" {% if applicant.status == s %}selected{% endif %}>{{ s|capitalize }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Personal Essay</h3>
+        <div class="essay-text">{{ applicant.essay if applicant.essay else 'No essay provided.' }}</div>
+    </div>
+
+    <div class="card">
+        <h3>Extracurricular Activities</h3>
+        <div class="essay-text">{{ applicant.extracurriculars if applicant.extracurriculars else 'No activities listed.' }}</div>
+    </div>
+</div>
+
+<!-- Reviews -->
+<div class="card">
+    <h2>Reviews ({{ reviews|length }})</h2>
+    {% if reviews %}
+    <div class="reviews-list">
+        {% for review in reviews %}
+        <div class="review-card">
+            <div class="review-header">
+                <span class="review-source badge badge-{{ 'ai' if review.source == 'ai' else 'manual' }}">
+                    {{ 'AI Review' if review.source == 'ai' else 'Manual Review' }}
+                </span>
+                <span class="review-date">{{ review.created_at[:16] if review.created_at else '' }}</span>
+                {% if review.reviewer_name %}
+                <span class="review-reviewer">by {{ review.reviewer_name }}</span>
+                {% endif %}
+            </div>
+            <div class="scores-grid">
+                <div class="score-item">
+                    <div class="score-value">{{ review.academic_score or '—' }}</div>
+                    <div class="score-label">Academic</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value">{{ review.essay_score or '—' }}</div>
+                    <div class="score-label">Essay</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value">{{ review.extracurricular_score or '—' }}</div>
+                    <div class="score-label">Activities</div>
+                </div>
+                <div class="score-item score-overall">
+                    <div class="score-value">{{ review.overall_score or '—' }}</div>
+                    <div class="score-label">Overall</div>
+                </div>
+            </div>
+            <div class="review-recommendation">
+                <strong>Recommendation:</strong>
+                <span class="badge badge-{{ review.recommendation }}">{{ review.recommendation }}</span>
+            </div>
+            {% if review.strengths %}
+            <div class="review-section"><strong>Strengths:</strong> {{ review.strengths }}</div>
+            {% endif %}
+            {% if review.concerns %}
+            <div class="review-section"><strong>Concerns:</strong> {{ review.concerns }}</div>
+            {% endif %}
+            {% if review.notes %}
+            <div class="review-section"><strong>Notes:</strong> {{ review.notes }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-state">No reviews yet. Submit a manual review below or request an AI review.</p>
+    {% endif %}
+</div>
+
+<!-- Manual review form -->
+<div class="card">
+    <h2>Submit Manual Review</h2>
+    <form method="post" action="{{ url_for('main.submit_review', applicant_id=applicant.id) }}">
+        <div class="form-row form-row-4">
+            <div class="form-group">
+                <label for="academic_score">Academic (1–10)</label>
+                <input type="number" id="academic_score" name="academic_score" min="1" max="10" required>
+            </div>
+            <div class="form-group">
+                <label for="essay_score">Essay (1–10)</label>
+                <input type="number" id="essay_score" name="essay_score" min="1" max="10" required>
+            </div>
+            <div class="form-group">
+                <label for="extracurricular_score">Activities (1–10)</label>
+                <input type="number" id="extracurricular_score" name="extracurricular_score" min="1" max="10" required>
+            </div>
+            <div class="form-group">
+                <label for="overall_score">Overall (1–10)</label>
+                <input type="number" id="overall_score" name="overall_score" min="1" max="10" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="recommendation">Recommendation</label>
+            <select id="recommendation" name="recommendation" required>
+                <option value="">Select…</option>
+                <option value="admit">Admit</option>
+                <option value="waitlist">Waitlist</option>
+                <option value="deny">Deny</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="strengths">Strengths</label>
+            <textarea id="strengths" name="strengths" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="concerns">Concerns</label>
+            <textarea id="concerns" name="concerns" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="notes">Additional Notes</label>
+            <textarea id="notes" name="notes" rows="2"></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Submit Review</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

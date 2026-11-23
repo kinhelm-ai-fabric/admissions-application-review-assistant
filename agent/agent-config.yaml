@@ -1,0 +1,10 @@
+version: "1.0"
+project: admissions-application-review-assistant
+agents:
+  - name: Application Review Agent
+    env_var_name: KINDO_REVIEW_AGENT_ID
+    overview: >
+      Evaluates university admissions applicants holistically, scoring
+      academics, essay quality, and extracurricular involvement on a 1-10
+      scale and providing an admit/waitlist/deny recommendation.
+    config: agents/application-review-agent.yaml

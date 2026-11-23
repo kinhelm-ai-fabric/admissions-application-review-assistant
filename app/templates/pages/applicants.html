@@ -1,0 +1,60 @@
+{% extends "layouts/base.html" %}
+{% block title %}Applicants — Admissions Review{% endblock %}
+
+{% block help_content %}
+<h4>Applicants List</h4>
+<p>This page shows all submitted applications. Use the status filter tabs to narrow down the list.</p>
+<ul>
+    <li><strong>All</strong> — every application regardless of status.</li>
+    <li><strong>Pending</strong> — applications not yet reviewed.</li>
+    <li><strong>Reviewed</strong> — applications with at least one review.</li>
+</ul>
+<p>Click on any row to view the full applicant profile, submit a manual review, or request an AI review.</p>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Applicants</h1>
+    <a href="{{ url_for('main.new_applicant') }}" class="btn btn-primary">+ New Applicant</a>
+</div>
+
+<div class="filter-tabs">
+    {% for s in ['all', 'pending', 'reviewed', 'admitted', 'waitlisted', 'denied'] %}
+    <a href="{{ url_for('main.applicants', status=s) }}"
+       class="filter-tab {% if current_status == s %}active{% endif %}">{{ s|capitalize }}</a>
+    {% endfor %}
+</div>
+
+<div class="card">
+    {% if applicants %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Major</th>
+                <th>GPA</th>
+                <th>Test Score</th>
+                <th>Status</th>
+                <th>Submitted</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applicants %}
+            <tr onclick="window.location='{{ url_for('main.view_applicant', applicant_id=app.id) }}'" style="cursor:pointer">
+                <td>{{ app.first_name }} {{ app.last_name }}</td>
+                <td>{{ app.email }}</td>
+                <td>{{ app.intended_major or '—' }}</td>
+                <td>{{ '%.2f'|format(app.gpa) if app.gpa else '—' }}</td>
+                <td>{{ app.test_score if app.test_score else '—' }}</td>
+                <td><span class="badge badge-{{ app.status }}">{{ app.status }}</span></td>
+                <td>{{ app.created_at[:10] if app.created_at else '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No applicants found with status "{{ current_status }}".</p>
+    {% endif %}
+</div>
+{% endblock %}

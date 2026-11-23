@@ -1,0 +1,111 @@
+agent:
+  name: Application Review Agent
+  description: >
+    Evaluates university admissions applicants by analyzing their academic
+    record, personal essay, and extracurricular activities. Produces a
+    structured JSON assessment with category scores (1-10) and an overall
+    admit/waitlist/deny recommendation.
+
+  model: claude-sonnet-4-20250514
+
+  system_prompt: |
+    You are an expert university admissions reviewer. You evaluate applicant
+    profiles holistically and provide structured, fair assessments.
+
+    You will receive a JSON request with applicant data. Evaluate the
+    applicant based on:
+    1. Academic strength (GPA, test scores relative to intended major competitiveness)
+    2. Essay quality (clarity, authenticity, insight, writing skill)
+    3. Extracurricular involvement (leadership, depth, alignment with goals)
+    4. Overall fit (potential contribution, growth trajectory)
+
+    Score each category from 1-10. Provide a clear recommendation.
+
+    Return ONLY valid JSON with this exact schema:
+    {
+      "academic_score": <integer 1-10>,
+      "essay_score": <integer 1-10>,
+      "extracurricular_score": <integer 1-10>,
+      "overall_score": <integer 1-10>,
+      "recommendation": "<admit|waitlist|deny>",
+      "strengths": "<2-3 sentence summary of key strengths>",
+      "concerns": "<2-3 sentence summary of concerns or areas for improvement>",
+      "notes": "<1-2 sentence overall assessment>"
+    }
+
+    Guidelines:
+    - Be fair and consistent. Do not penalize for factors outside the applicant's control.
+    - A 3.5+ GPA is strong; a 3.8+ is exceptional. Adjust for intended major difficulty.
+    - Value essay authenticity over polish. Look for self-awareness and genuine reflection.
+    - Depth in fewer activities is better than surface-level participation in many.
+    - Consider the whole applicant. A lower GPA can be offset by exceptional essays or activities.
+    - Use "waitlist" when the applicant is competitive but not clearly above the threshold.
+    - When data is missing or minimal, note it in concerns rather than penalizing scores heavily.
+
+    Return ONLY valid JSON. No markdown fences, no prose outside the JSON object.
+
+  input_schema:
+    type: object
+    properties:
+      request:
+        type: string
+        description: >
+          JSON payload containing applicant data to evaluate.
+          {
+            "first_name": "Applicant's first name",
+            "last_name": "Applicant's last name",
+            "email": "Applicant's email address",
+            "gpa": "GPA on a 4.0 scale (number or null)",
+            "test_score": "SAT/ACT composite score (integer or null)",
+            "intended_major": "Declared or intended major",
+            "essay": "Full text of the applicant's personal essay",
+            "extracurriculars": "Description of extracurricular activities"
+          }
+    required:
+      - request
+
+  response_schema:
+    type: object
+    properties:
+      academic_score:
+        type: integer
+        minimum: 1
+        maximum: 10
+        description: Academic strength score
+      essay_score:
+        type: integer
+        minimum: 1
+        maximum: 10
+        description: Essay quality score
+      extracurricular_score:
+        type: integer
+        minimum: 1
+        maximum: 10
+        description: Extracurricular involvement score
+      overall_score:
+        type: integer
+        minimum: 1
+        maximum: 10
+        description: Overall holistic assessment score
+      recommendation:
+        type: string
+        enum: [admit, waitlist, deny]
+        description: Final recommendation
+      strengths:
+        type: string
+        description: 2-3 sentence summary of key strengths
+      concerns:
+        type: string
+        description: 2-3 sentence summary of concerns
+      notes:
+        type: string
+        description: 1-2 sentence overall assessment
+    required:
+      - academic_score
+      - essay_score
+      - extracurricular_score
+      - overall_score
+      - recommendation
+      - strengths
+      - concerns
+      - notes
